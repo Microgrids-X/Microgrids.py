@@ -1,18 +1,37 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-""" Component classes for Microgrid projects
+# Pierre Haessig, Evelise Antunes — 2022
+""" Component classes for describing microgrid projects
 
-Pierre Haessig, Evelise Antunes — 2022
+also include `production` methods for non-dispatchable sources
 """
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from collections.abc import Sequence
+import numpy as np
 import numpy.typing as npt
+
+
+@dataclass
+class Microgrid:
+    """Microgrid system description"""
+    project: 'Project'
+    "microgrid project information"
+    load: npt.ArrayLike
+    "desired load (kW)"
+    gen: 'DispatchableGenerator'
+    "dispatchable generator"
+    storage: 'Battery'
+    "energy storage (e.g. battery)"
+    nondispatchables: Sequence['NonDispatchableSource']
+    "non-dispatchable sources (e.g. renewables like wind and solar)"
 
 
 @dataclass
 class Project:
     """Microgrid project information
-    
+
     - lifetime (y)
     - discount rate ∈ [0,1]
     - time step (h)
@@ -40,7 +59,7 @@ class DispatchableGenerator:
     "fuel curve slope (fu/h/kW)"
 
     # Economics parameters
-    fuel_price: float 
+    fuel_price: float
     "fuel price ($/fu)"
     investment_price: float
     "initial investiment price ($/kW)"
@@ -77,7 +96,7 @@ class Battery:
     lifetime: float
     "calendar lifetime (y)"
     lifetime_cycles: float
-    "Maximum number of cycles over life (1)"
+    "maximum number of cycles over life (1)"
 
     # Technical parameters with default values
     charge_rate_max: float = 1.0
@@ -85,11 +104,11 @@ class Battery:
     discharge_rate_max: float = 1.0
     "max discharge power for 1 kWh (kW/kWh = h^-1)"
     efficiency: float = 0.9487
-    "Charge/discharge efficiency ∈ [0,1]. Remark: round-trip efficiency is efficiency²"
+    "charge/discharge efficiency ∈ [0,1]. Remark: round-trip efficiency is efficiency²"
     SoC_min: float = 0.0
-    "Minimum State of Charge ∈ [0,1]"
-    energy_initial: float = 0.0
-    "Initial energy (kWh)"
+    "minimum State of Charge ∈ [0,1]"
+    SoC_ini: float = 0.0
+    "initial State of Charge ∈ [0,1]"
 
     # Economics with default values
     replacement_price_ratio: float = 1.0
@@ -98,8 +117,18 @@ class Battery:
     "salvage price, as a fraction of initial investment price"
 
 
+# Non-dispatchable sources (e.g. renewables like wind and solar)
+
+class NonDispatchableSource(ABC):
+    """Base class for non-dispatchable sources (e.g. renewables like wind and solar)"""
+
+    @abstractmethod
+    def production(self) -> np.ndarray:
+        "production time series"
+        pass
+
 @dataclass
-class Photovoltaic:
+class Photovoltaic(NonDispatchableSource):
     """Solar photovoltaic generator (including AC/DC converter)"""
     power_rated: float   # decision variable
     "rated power (kW)"
@@ -123,3 +152,8 @@ class Photovoltaic:
     "replacement price, as a fraction of initial investment price"
     salvage_price_ratio: float = 1.0
     "salvage price, as a fraction of initial investment price"
+
+    def production(self):
+        "PV production time series"
+        power_output = self.derating_factor * self.power_rated * self.irradiance
+        return power_output
