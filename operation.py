@@ -138,11 +138,15 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
     # Desired net load
     Pnl_request = mg.load - renew_potential
 
-    # Fixed parameters
+    # Fixed parameters and short aliases
     K = len(mg.load)
     dt = mg.project.timestep
     Psto_pmax =  mg.storage.discharge_rate_max * mg.storage.energy_rated
     Psto_pmin = -mg.storage.charge_rate_max * mg.storage.energy_rated
+    Esto_max = mg.storage.energy_rated
+    Esto_min = mg.storage.SoC_min * mg.storage.energy_rated
+    sto_loss = mg.storage.loss_factor
+
 
     # Initialization of loop variables
     # Initial storage state
@@ -159,18 +163,23 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
     for k in range(K):
 
         ### Decide energy dispatch
-        Psto_emin = - (mg.storage.energy_max - Esto) / ((1 - mg.storage.loss) * dt)
-        Psto_emax = (Esto - mg.storage.energy_min) / ((1 + mg.storage.loss) * dt)
+
+        # Storage energy and power limits (TODO: move to dispatch)
+        Psto_emin = - (Esto_max - Esto) / ((1 - sto_loss) * dt)
+        Psto_emax = (Esto - Esto_min) / ((1 + sto_loss) * dt)
         Psto_dmax = min(Psto_emax, Psto_pmax)
         Psto_cmax = max(Psto_emin, Psto_pmin)
 
         Pgen, Psto, Pspill, Pshed = dispatch(
             Pnl_request[k],
             Psto_cmax, Psto_dmax,
-            mg.dispatchable.power_rated)
+            mg.generator.power_rated)
 
         if recorder:
             recorder.rec(Pgen=Pgen, Psto=Psto, Esto=Esto, Pspill=Pspill, Pshed=Pshed)
+
+        # Storage dynamics
+        Esto = Esto - (Psto + sto_loss*abs(Psto))*dt
 
         ### Aggregate operation statistics
 
@@ -188,8 +197,8 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
         # Dispatchable generator statistics
         if Pgen > 0.0: # Generator ON
             op_st.gen_hours += dt
-            fuel_rate = mg.dispatchable.fuel_intercept * mg.dieselgenerator.power_rated +\
-                          mg.dispatchable.fuel_slope * Pgen # (l/h)
+            fuel_rate = mg.generator.fuel_intercept * mg.generator.power_rated +\
+                          mg.generator.fuel_slope * Pgen # (l/h)
             op_st.gen_fuel += fuel_rate*dt
 
         # Energy storage (e.g. battery) statistics
@@ -206,11 +215,14 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
     # Some more aggregated operation statistics
     load_energy = np.sum(mg.load)*dt
     op_st.served_energy = load_energy - op_st.shed_energy
-    op_st.shed_rate = op_st.shed_energy / load_energy
-    op_st.storage_cycles = op_st.storage_throughput / (2*mg.storage.energy_max)
-    op_st.spilled_rate = op_st.spilled_energy / op_st.renew_potential_energy
+    op_st.shed_rate = op_st.shed_energy / load_energy \
+        if load_energy != 0.0 else np.inf
+    op_st.storage_cycles = op_st.storage_throughput / (2*mg.storage.energy_rated) \
+        if mg.storage.energy_rated != 0.0 else np.inf
     op_st.renew_potential_energy = np.sum(renew_potential)
     op_st.renew_energy = op_st.renew_potential_energy - op_st.spilled_energy
-    op_st.renew_rate = op_st.renew_energy/op_st.served_energy
-
+    op_st.renew_rate = op_st.renew_energy/op_st.served_energy \
+        if op_st.served_energy != 0.0 else np.inf
+    op_st.spilled_rate = op_st.spilled_energy / op_st.renew_potential_energy \
+        if op_st.renew_potential_energy != 0.0 else np.inf
     return op_st

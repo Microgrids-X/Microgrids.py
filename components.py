@@ -20,7 +20,7 @@ class Microgrid:
     "microgrid project information"
     load: npt.ArrayLike
     "desired load (kW)"
-    gen: 'DispatchableGenerator'
+    generator: 'DispatchableGenerator'
     "dispatchable generator"
     storage: 'Battery'
     "energy storage (e.g. battery)"
@@ -64,7 +64,7 @@ class DispatchableGenerator:
     investment_price: float
     "initial investiment price ($/kW)"
     om_price: float
-    "operation & Maintenance price ($/kW/h of operation)"
+    "operation & maintenance price ($/kW/h of operation)"
     lifetime: float
     "generator lifetime (h)"
 
@@ -83,7 +83,10 @@ class DispatchableGenerator:
 
 @dataclass
 class Battery:
-    """Battery energy storage (including AC/DC converter)"""
+    """Battery energy storage (including AC/DC converter)
+
+    Battery dynamics is E(k+1) = E(k) − (P(k) + α|P(k)|).Δt
+    """
     # Technical parameters
     energy_rated: float
     "rated energy capacity (kWh)"
@@ -103,8 +106,8 @@ class Battery:
     "max charge power for 1 kWh (kW/kWh = h^-1)"
     discharge_rate_max: float = 1.0
     "max discharge power for 1 kWh (kW/kWh = h^-1)"
-    efficiency: float = 0.9487
-    "charge/discharge efficiency ∈ [0,1]. Remark: round-trip efficiency is efficiency²"
+    loss_factor: float = 0.05
+    "linear loss factor α (round-trip efficiency is about 1 − 2α) ∈ [0,1]"
     SoC_min: float = 0.0
     "minimum State of Charge ∈ [0,1]"
     SoC_ini: float = 0.0
@@ -130,7 +133,7 @@ class NonDispatchableSource(ABC):
 @dataclass
 class Photovoltaic(NonDispatchableSource):
     """Solar photovoltaic generator (including AC/DC converter)"""
-    power_rated: float   # decision variable
+    power_rated: float
     "rated power (kW)"
     irradiance: npt.ArrayLike
     "global solar irradiance incident on the PV array (kW/m²)"
