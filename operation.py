@@ -56,6 +56,29 @@ class OperationStats:
     "ratio of energy actually supplied by renewables to the energy served to the load (∈ [0,1])"
 
 
+class Recorder:
+    """Recorder for time series"""
+    def init(self, **kwargs: dict[str,int]):
+        """initialize arrays to record values of prescribed length
+
+        Example: rec.init(var1=10, var2=11)
+        """
+        for name,length in kwargs.items():
+            vector = np.zeros(length)
+            self.__setattr__(name, vector)
+
+    def rec(self, k:int, **kwargs: dict[str,int]):
+        """record values at index `k`.
+
+        `k` should be in [0, `length`−1], for the given `length` provided in `init`.
+
+        Example: rec.rec(5, var1=0.8)
+        """
+        for name,value in kwargs.items():
+            vector = self.__getattribute__(name)
+            vector[k] = value
+
+
 def dispatch(Pnl_req, Psto_cmax, Psto_dmax, Pgen_max) -> tuple[float, float, float, float]:
     """Energy dispatch decision for a "load-following-style" strategy.
 
@@ -176,7 +199,7 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
             mg.generator.power_rated)
 
         if recorder:
-            recorder.rec(Pgen=Pgen, Psto=Psto, Esto=Esto, Pspill=Pspill, Pshed=Pshed)
+            recorder.rec(k, Pgen=Pgen, Psto=Psto, Esto=Esto, Pspill=Pspill, Pshed=Pshed)
 
         # Storage dynamics
         Esto = Esto - (Psto + sto_loss*abs(Psto))*dt
@@ -210,7 +233,7 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
     # end for each instant k
 
     if recorder:
-        recorder.rec(Esto=Esto)# Esto at last instant
+        recorder.rec(K-1, Esto=Esto)# Esto at last instant
 
     # Some more aggregated operation statistics
     load_energy = np.sum(mg.load)*dt

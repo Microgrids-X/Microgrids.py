@@ -7,7 +7,7 @@ Uses real load data from Ouessant island and solar data from PVGIS.
 """
 
 from components import *
-from operation import operation
+from operation import operation, Recorder
 import numpy as np
 
 # Load time series data
@@ -79,4 +79,6 @@ photovoltaic = Photovoltaic(power_rated_pv, irradiance,
 
 microgrid = Microgrid(project, Pload, generator, battery, [photovoltaic])
 
-oper_stats = operation(microgrid)
+rec = Recorder()
+
+oper_stats = operation(microgrid, rec)
