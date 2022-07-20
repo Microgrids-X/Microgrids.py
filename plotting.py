@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 from components import Microgrid
-from operation import TrajRecorder
+from operation import OperationStats, TrajRecorder
 
 def plot_oper_traj(microgrid:Microgrid, oper_traj:TrajRecorder) -> Figure:
     """plot trajectories of operational microgrid variables"""
@@ -92,6 +92,60 @@ def plot_oper_traj(microgrid:Microgrid, oper_traj:TrajRecorder) -> Figure:
         axi.legend(loc='upper right', ncol=2)
 
     fig.tight_layout()
-    plt.show()
 
     return fig
+
+def plot_energy_mix(microgrid:Microgrid, oper_stats:OperationStats, eu='MWh'):
+    """plot the microgrid energy mix
+
+    `eu` is the energy unit ('kWh', 'MWh', 'GWh', 'TWh')
+    """
+    fig, ax = plt.subplots(1,1, figsize=(5,2.5))
+
+    # energy scaling: kWh → k/M/G/TWh
+    if eu == 'kWh':
+        es = 1.0
+    elif eu == 'MWh':
+        es = 1e-3
+    elif eu == 'GWh':
+        es = 1e-6
+    elif eu == 'TWh':
+        es = 1e-9
+    else:
+        raise ValueError(f"Energy unit `eu` should be 'kWh', 'MWh', 'GWh' or 'TWh', but got {eu} instead")
+
+    data = np.array([
+        oper_stats.served_energy + oper_stats.shed_energy,
+        oper_stats.renew_energy,
+        oper_stats.gen_energy,
+        oper_stats.storage_loss_energy,
+    ])*es
+
+    ylabels = [
+        'Load',
+        'Renewables',
+        'Generator',
+        'Storage loss',
+    ]
+
+    y = np.arange(len(data))
+
+    ax.barh(-1, oper_stats.renew_potential_energy*es, label='renew potential',
+            color = 'tab:blue', alpha=0.3)
+    ax.barh(-y, data,
+            color = 'tab:blue')
+
+    if oper_stats.shed_energy > 0.0:
+        ax.barh(0, oper_stats.shed_energy*es, label='shedding',
+                color = 'tab:red')
+
+    ax.set(
+        title = 'Microgrid energy mix (shedding: {:.3g})'.format(oper_stats.shed_rate),
+        yticks = -y,
+        yticklabels = ylabels,
+        xlabel = f'{eu}/y'
+    )
+    ax.grid()
+    ax.legend(loc='lower right')
+
+    fig.tight_layout()

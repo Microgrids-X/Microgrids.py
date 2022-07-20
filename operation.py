@@ -59,7 +59,7 @@ class OperationStats:
     renew_energy: float = 0.0
     "energy actually supplied by renewables when substracting spillage (kWh/y)"
     renew_rate: float = 0.0
-    "ratio of energy actually supplied by renewables to the energy served to the load (∈ [0,1])"
+    "ratio of energy actually supplied by renewables (net of storage loss) to the energy served to the load (∈ [0,1])"
 
 
 class TrajRecorder:

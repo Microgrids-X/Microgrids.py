@@ -6,13 +6,14 @@
 Uses real load data from Ouessant island and solar data from PVGIS.
 """
 
+from matplotlib import pyplot as plt
 from components import *
 import operation
 from importlib import reload
 reload(operation)
 from operation import operation, TrajRecorder
 
-from plotting import plot_oper_traj
+from plotting import plot_oper_traj, plot_energy_mix
 
 import numpy as np
 
@@ -34,10 +35,8 @@ timestep = 1 # h
 
 project = Project(lifetime, discount_rate, timestep)
 
-
 # Diesel generator
-
-power_rated_gen = 1800./2  # /2 to see some load shedding
+power_rated_gen = 1800.  # /2 to see some load shedding
 fuel_intercept = 0.0 # fuel curve intercept (l/h/kW_max)
 fuel_slope = 0.240 # fuel curve slope (l/h/kW)
 fuel_price = 1. # fuel price ($/l)
@@ -50,7 +49,6 @@ generator = DispatchableGenerator(power_rated_gen,
     investment_price_gen, om_price_gen,
     lifetime_gen
 )
-print(generator)
 
 # Battery energy storage
 energy_rated_sto = 9000. # rated energy capacity (kWh)
@@ -68,7 +66,6 @@ battery = Battery(energy_rated_sto,
     lifetime_sto, lifetime_cycles,
     charge_rate_max, discharge_rate_max,
     loss_factor_sto)
-print(battery)
 
 # Photovoltaic generation
 power_rated_pv = 6000. # rated power (kW)
@@ -90,3 +87,6 @@ oper_traj = TrajRecorder()
 oper_stats = operation(microgrid, oper_traj)
 
 plot_oper_traj(microgrid, oper_traj)
+plot_energy_mix(microgrid, oper_stats, 'GWh')
+
+plt.show()
