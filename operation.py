@@ -17,7 +17,7 @@ class OperationStats:
     """
     # Load statistics
     served_energy: float = 0.0
-    "energy served to the load (kWh/y)"
+    "energy actually served to the load (kWh/y)"
     shed_energy: float = 0.0
     "shed energy, that is not served to the load (kWh/y)"
     shed_max: float = 0.0
@@ -27,9 +27,11 @@ class OperationStats:
     shed_duration_max: float = 0.0
     "maximum consecutive duration of load shedding (h)"
     shed_rate: float = 0.0
-    "ratio of shed energy to the cumulated desired load (∈ [0,1])"
+    "ratio of shed energy to the desired load (∈ [0,1])"
 
     # Dispatchable generator statistics
+    gen_energy: float = 0.0
+    "energy supplied by the dispatchable generator (kWh/y)"
     gen_hours: float = 0.0
     "cumulated operating hours of the dispatchable generator (h/y)"
     gen_fuel: float = 0.0
@@ -37,9 +39,13 @@ class OperationStats:
 
     # Energy storage (e.g. battery) statistics
     storage_cycles: float = 0.0
-    "cumulated cycling of the energy storage (cycles/y)"
-    storage_throughput: float = 0.0
-    "cumulated energy throughput (in and out) of the energy storage (kWh/y)"
+    "cycling of the energy storage (cycles/y)"
+    storage_char_energy: float = 0.0
+    "energy charged into the energy storage (kWh/y)"
+    storage_dis_energy: float = 0.0
+    "energy discharged out of the energy storage (kWh/y)"
+    storage_loss_energy: float = 0.0
+    "energy lossed in the energy storage (kWh/y)"
 
     # Non-dispatchable (typ. renewables) sources statistics
     spilled_energy: float = 0.0
@@ -56,8 +62,8 @@ class OperationStats:
     "ratio of energy actually supplied by renewables to the energy served to the load (∈ [0,1])"
 
 
-class Recorder:
-    """Recorder for time series"""
+class TrajRecorder:
+    """Recorder for trajectories of operational variables"""
     def init(self, **kwargs: dict[str,int]):
         """initialize arrays to record values of prescribed length
 
@@ -173,13 +179,14 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
 
     # Initialization of loop variables
     # Initial storage state
-    Esto = mg.storage.SoC_ini * mg.storage.energy_rated
+    Esto_ini = mg.storage.SoC_ini * mg.storage.energy_rated
+    Esto = Esto_ini
     # Operation statistics counters initialiazed at zero
     op_st = OperationStats()
     shed_duration = 0.0 # duration of current load shedding event (h)
 
     if recorder:
-        recorder.init(Pgen=K, Psto=K, Esto=K+1, Pspill=K, Pshed=K)
+        recorder.init(Prep=K, Pgen=K, Psto=K, Esto=K+1, Pspill=K, Pshed=K)
 
 
     ### Operation simulation loop
@@ -199,7 +206,10 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
             mg.generator.power_rated)
 
         if recorder:
-            recorder.rec(k, Pgen=Pgen, Psto=Psto, Esto=Esto, Pspill=Pspill, Pshed=Pshed)
+            recorder.rec(k,
+                Prep=renew_potential[k],
+                Pgen=Pgen, Psto=Psto, Esto=Esto,
+                Pspill=Pspill, Pshed=Pshed)
 
         # Storage dynamics
         Esto = Esto - (Psto + sto_loss*abs(Psto))*dt
@@ -219,13 +229,17 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
 
         # Dispatchable generator statistics
         if Pgen > 0.0: # Generator ON
+            op_st.gen_energy += Pgen*dt
             op_st.gen_hours += dt
             fuel_rate = mg.generator.fuel_intercept * mg.generator.power_rated +\
                           mg.generator.fuel_slope * Pgen # (l/h)
             op_st.gen_fuel += fuel_rate*dt
 
         # Energy storage (e.g. battery) statistics
-        op_st.storage_throughput += abs(Psto)*dt
+        if Psto > 0.0: # discharge
+            op_st.storage_dis_energy += Psto*dt
+        else:
+            op_st.storage_char_energy -= Psto*dt
 
         # Non-dispatchable (typ. renewables) sources statistics
         op_st.spilled_energy += Pspill*dt
@@ -240,11 +254,16 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
     op_st.served_energy = load_energy - op_st.shed_energy
     op_st.shed_rate = op_st.shed_energy / load_energy \
         if load_energy != 0.0 else np.inf
-    op_st.storage_cycles = op_st.storage_throughput / (2*mg.storage.energy_rated) \
+
+    op_st.storage_loss_energy = op_st.storage_char_energy \
+        - op_st.storage_dis_energy - (Esto - Esto_ini)
+    storage_throughput = op_st.storage_char_energy + op_st.storage_dis_energy
+    op_st.storage_cycles = storage_throughput / (2*mg.storage.energy_rated) \
         if mg.storage.energy_rated != 0.0 else np.inf
+
     op_st.renew_potential_energy = np.sum(renew_potential)
     op_st.renew_energy = op_st.renew_potential_energy - op_st.spilled_energy
-    op_st.renew_rate = op_st.renew_energy/op_st.served_energy \
+    op_st.renew_rate = 1 - op_st.gen_energy/op_st.served_energy \
         if op_st.served_energy != 0.0 else np.inf
     op_st.spilled_rate = op_st.spilled_energy / op_st.renew_potential_energy \
         if op_st.renew_potential_energy != 0.0 else np.inf

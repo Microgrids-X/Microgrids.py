@@ -7,7 +7,13 @@ Uses real load data from Ouessant island and solar data from PVGIS.
 """
 
 from components import *
-from operation import operation, Recorder
+import operation
+from importlib import reload
+reload(operation)
+from operation import operation, TrajRecorder
+
+from plotting import plot_oper_traj
+
 import numpy as np
 
 # Load time series data
@@ -31,7 +37,7 @@ project = Project(lifetime, discount_rate, timestep)
 
 # Diesel generator
 
-power_rated_gen = 1800.  # /2 to see some load shedding
+power_rated_gen = 1800./2  # /2 to see some load shedding
 fuel_intercept = 0.0 # fuel curve intercept (l/h/kW_max)
 fuel_slope = 0.240 # fuel curve slope (l/h/kW)
 fuel_price = 1. # fuel price ($/l)
@@ -55,13 +61,13 @@ lifetime_cycles = 3000 # maximum number of cycles over life (1)
 # Parameters with default values
 charge_rate_max = 1.0 # max charge power for 1 kWh (kW/kWh = h^-1)
 discharge_rate_max = 1.0 # max discharge power for 1 kWh (kW/kWh = h^-1)
-efficiency_sto = 0.90 # round-trip storage efficiency ∈ [0,1]
+loss_factor_sto = 0.05 # linear loss factor α (round-trip efficiency is about 1 − 2α) ∈ [0,1]
 
 battery = Battery(energy_rated_sto,
     investment_price_sto, om_price_sto,
     lifetime_sto, lifetime_cycles,
     charge_rate_max, discharge_rate_max,
-    efficiency_sto)
+    loss_factor_sto)
 print(battery)
 
 # Photovoltaic generation
@@ -71,7 +77,7 @@ investment_price_pv = 1200. # initial investiment price ($/kW)
 om_price_pv = 20.# operation and maintenance price ($/kW)
 lifetime_pv = 25. # lifetime (y)
 # Parameters with default values
-derating_factor_pv = 0.9 # derating factor (or performance ratio) ∈ [0,1]"
+derating_factor_pv = 1.0 # derating factor (or performance ratio) ∈ [0,1]"
 
 photovoltaic = Photovoltaic(power_rated_pv, irradiance,
     investment_price_pv, om_price_pv,
@@ -79,6 +85,8 @@ photovoltaic = Photovoltaic(power_rated_pv, irradiance,
 
 microgrid = Microgrid(project, Pload, generator, battery, [photovoltaic])
 
-rec = Recorder()
+oper_traj = TrajRecorder()
 
-oper_stats = operation(microgrid, rec)
+oper_stats = operation(microgrid, oper_traj)
+
+plot_oper_traj(microgrid, oper_traj)
