@@ -8,8 +8,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from components import Microgrid, Project
-from operation import OperationStats
+from .components import Microgrid, Project
+from .operation import OperationStats
+
+__all__ = ['sim_economics']
+
 
 @dataclass
 class CostFactors:
@@ -152,10 +155,9 @@ class MicrogridCosts:
 # end MicrogridCosts
 
 
-def economics(mg: Microgrid, oper_stats: OperationStats):
-    """evaluate performance of Microgrid `mg`,
+def sim_economics(mg: Microgrid, oper_stats: OperationStats) -> MicrogridCosts:
+    """evaluate economic performance of Microgrid `mg`,
     based on its operation statistics `oper_stats`.
-
     """
     # Dispatchable generator
     gen = mg.generator

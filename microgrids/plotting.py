@@ -8,8 +8,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
-from components import Microgrid
-from operation import OperationStats, TrajRecorder
+from .components import Microgrid
+from .operation import OperationStats, TrajRecorder
+
+__all__ = ['plot_oper_traj', 'plot_energy_mix']
 
 def plot_oper_traj(microgrid:Microgrid, oper_traj:TrajRecorder) -> Figure:
     """plot trajectories of operational microgrid variables"""

@@ -1,0 +1,31 @@
+[project]
+name = "microgrids"
+version = "0.0.1"
+authors = [
+  { name="Pierre", email="pierre.haessig@centralesupelec.fr" },
+]
+maintainers = [
+  { name="Pierre", email="pierre.haessig@centralesupelec.fr" },
+]
+description = "Operational & economic simulation of Microgrid projects"
+readme = "README.md"
+license = { file="LICENSE.md" }
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "numpy",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Microgrids-X/Microgrids.py"
+"Bug Tracker" = "https://github.com/Microgrids-X/Microgrids.py/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+

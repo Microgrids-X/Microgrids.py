@@ -6,22 +6,18 @@
 Uses real load data from Ouessant island and solar data from PVGIS.
 """
 
+from pathlib import Path
 from matplotlib import pyplot as plt
-from components import *
-import operation
-from importlib import reload
 
-from operation import operation, TrajRecorder
-import economics
-reload(economics)
-from economics import economics
-
-from plotting import plot_oper_traj, plot_energy_mix
+import microgrids as mgs
 
 import numpy as np
 
 # Load time series data
-data = np.loadtxt('data/Ouessant_data_2016.csv',
+print(__file__)
+folder = Path(__file__).parent
+datapath = folder / 'data' / 'Ouessant_data_2016.csv'
+data = np.loadtxt(datapath,
                   delimiter=',', skiprows=2, usecols=(1,2))
 
 # Split load and solar data:
@@ -36,7 +32,7 @@ lifetime = 25 # yr
 discount_rate = 0.05
 timestep = 1 # h
 
-project = Project(lifetime, discount_rate, timestep)
+project = mgs.Project(lifetime, discount_rate, timestep)
 
 # Diesel generator
 power_rated_gen = 1800.  # /2 to see some load shedding
@@ -47,7 +43,7 @@ investment_price_gen = 400. # initial investiment price ($/kW)
 om_price_gen = 0.02 # operation & maintenance price ($/kW/h of operation)
 lifetime_gen = 15000. # generator lifetime (h)
 
-generator = DispatchableGenerator(power_rated_gen,
+generator = mgs.DispatchableGenerator(power_rated_gen,
     fuel_intercept, fuel_slope, fuel_price,
     investment_price_gen, om_price_gen,
     lifetime_gen
@@ -64,7 +60,7 @@ charge_rate_max = 1.0 # max charge power for 1 kWh (kW/kWh = h^-1)
 discharge_rate_max = 1.0 # max discharge power for 1 kWh (kW/kWh = h^-1)
 loss_factor_sto = 0.05 # linear loss factor α (round-trip efficiency is about 1 − 2α) ∈ [0,1]
 
-battery = Battery(energy_rated_sto,
+battery = mgs.Battery(energy_rated_sto,
     investment_price_sto, om_price_sto,
     lifetime_sto, lifetime_cycles,
     charge_rate_max, discharge_rate_max,
@@ -79,20 +75,20 @@ lifetime_pv = 25. # lifetime (y)
 # Parameters with default values
 derating_factor_pv = 1.0 # derating factor (or performance ratio) ∈ [0,1]"
 
-photovoltaic = Photovoltaic(power_rated_pv, irradiance,
+photovoltaic = mgs.Photovoltaic(power_rated_pv, irradiance,
     investment_price_pv, om_price_pv,
     lifetime_pv, derating_factor_pv)
 
-microgrid = Microgrid(project, Pload,
+microgrid = mgs.Microgrid(project, Pload,
     generator, battery,
     {'Solar PV': photovoltaic}
 )
 
-oper_traj = TrajRecorder()
+oper_traj = mgs.TrajRecorder()
 
-oper_stats = operation(microgrid, oper_traj)
+oper_stats = mgs.sim_operation(microgrid, oper_traj)
 
-# timing of `operation`:
+# timing of `sim_operation`:
 # - 25.3 ms without trajectory recording.
 # - 43.2 ms with recording
 
@@ -101,7 +97,7 @@ oper_stats = operation(microgrid, oper_traj)
 
 # plt.show()
 
-mgc = economics(microgrid, oper_stats)
+mgc = mgs.sim_economics(microgrid, oper_stats)
 print(f'Microgrid NPC: {mgc.npc/1e6:.3f} M$')
 
 cmat, cmat_rows, cmat_cols = mgc.costs_table()
@@ -110,6 +106,6 @@ print(f'  rows: {cmat_rows}')
 print(np.round(cmat/1e6, 3)) # in M$
 
 def simulate(microgrid):
-    oper_stats = operation(microgrid)
-    mgc = economics(microgrid, oper_stats)
+    oper_stats = mgs.sim_operation(microgrid)
+    mgc = mgs.sim_economics(microgrid, oper_stats)
     return mgc, oper_stats

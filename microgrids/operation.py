@@ -5,8 +5,12 @@
 """
 
 from dataclasses import dataclass
+
 import numpy as np
-from components import Microgrid
+
+from .components import Microgrid
+
+__all__ = ['TrajRecorder', 'sim_operation']
 
 
 @dataclass
@@ -153,7 +157,7 @@ def dispatch(Pnl_req, Psto_cmax, Psto_dmax, Pgen_max) -> tuple[float, float, flo
     return Pgen, Psto, Pspill, Pshed
 
 
-def operation(mg:Microgrid, recorder=None) -> OperationStats:
+def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
     """Simulate the operation of Microgrid project `mg`.
 
     Time series are recorded if `recorder` is a `Recorder`.
