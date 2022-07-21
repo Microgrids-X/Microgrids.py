@@ -161,7 +161,7 @@ def operation(mg:Microgrid, recorder=None) -> OperationStats:
     Returns operational statistics.
     """
     # Remark: assuming all non-dispatchable sources are renewable!
-    renew_productions = [nd.production() for nd in mg.nondispatchables]
+    renew_productions = [nd.production() for nd in mg.nondispatchables.values()]
     renew_potential = sum(renew_productions)
 
     # Desired net load

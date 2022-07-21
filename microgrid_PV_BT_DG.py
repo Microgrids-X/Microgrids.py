@@ -10,8 +10,11 @@ from matplotlib import pyplot as plt
 from components import *
 import operation
 from importlib import reload
-reload(operation)
+
 from operation import operation, TrajRecorder
+import economics
+reload(economics)
+from economics import economics
 
 from plotting import plot_oper_traj, plot_energy_mix
 
@@ -80,13 +83,33 @@ photovoltaic = Photovoltaic(power_rated_pv, irradiance,
     investment_price_pv, om_price_pv,
     lifetime_pv, derating_factor_pv)
 
-microgrid = Microgrid(project, Pload, generator, battery, [photovoltaic])
+microgrid = Microgrid(project, Pload,
+    generator, battery,
+    {'Solar PV': photovoltaic}
+)
 
 oper_traj = TrajRecorder()
 
 oper_stats = operation(microgrid, oper_traj)
 
-plot_oper_traj(microgrid, oper_traj)
-plot_energy_mix(microgrid, oper_stats, 'GWh')
+# timing of `operation`:
+# - 25.3 ms without trajectory recording.
+# - 43.2 ms with recording
 
-plt.show()
+# plot_oper_traj(microgrid, oper_traj)
+# plot_energy_mix(microgrid, oper_stats, 'GWh')
+
+# plt.show()
+
+mgc = economics(microgrid, oper_stats)
+print(f'Microgrid NPC: {mgc.npc/1e6:.3f} M$')
+
+cmat, cmat_rows, cmat_cols = mgc.costs_table()
+print(f'Cost matrix. columns: {cmat_cols}')
+print(f'  rows: {cmat_rows}')
+print(np.round(cmat/1e6, 3)) # in M$
+
+def simulate(microgrid):
+    oper_stats = operation(microgrid)
+    mgc = economics(microgrid, oper_stats)
+    return mgc, oper_stats

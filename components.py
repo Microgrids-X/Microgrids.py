@@ -8,7 +8,6 @@ also include `production` methods for non-dispatchable sources
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from collections.abc import Sequence
 import numpy as np
 import numpy.typing as npt
 
@@ -24,7 +23,7 @@ class Microgrid:
     "dispatchable generator"
     storage: 'Battery'
     "energy storage (e.g. battery)"
-    nondispatchables: Sequence['NonDispatchableSource']
+    nondispatchables: dict[str, 'NonDispatchableSource']
     "non-dispatchable sources (e.g. renewables like wind and solar)"
 
 
@@ -63,10 +62,10 @@ class DispatchableGenerator:
     "fuel price ($/fu)"
     investment_price: float
     "initial investiment price ($/kW)"
-    om_price: float
+    om_price_hours: float
     "operation & maintenance price ($/kW/h of operation)"
-    lifetime: float
-    "generator lifetime (h)"
+    lifetime_hours: float
+    "generator operation lifetime (h of operation)"
 
     # Technical parameters with default values
     load_ratio_min: float = 0.0
@@ -79,6 +78,11 @@ class DispatchableGenerator:
     "salvage price, as a fraction of initial investment price"
     fuel_unit: str = "l"
     "fuel counting unit (i.e. 'fu' used in price and fuel curve parameters)"
+
+    def lifetime(self, oper_hours : float) -> float:
+        """effective lifetime (y), based on yearly operation hours `oper_hours` (h/y)
+        """
+        return self.lifetime_hours / oper_hours # h / (h/y) → y
 
 
 @dataclass
@@ -96,7 +100,7 @@ class Battery:
     "initial investiment price ($/kWh)"
     om_price: float
     "operation and maintenance price ($/kWh/y)"
-    lifetime: float
+    lifetime_calendar: float
     "calendar lifetime (y)"
     lifetime_cycles: float
     "maximum number of cycles over life (1)"
@@ -118,6 +122,15 @@ class Battery:
     "replacement price, as a fraction of initial investment price"
     salvage_price_ratio: float = 1.0
     "salvage price, as a fraction of initial investment price"
+
+    def lifetime(self, cycles : float) -> float:
+        """effective lifetime (y), based on yearly operation `cycles`
+        """
+        if cycles > 0.0:
+            lifetime_cycling = self.lifetime_cycles / cycles # cycles / (cycles/y) → y
+            return min(self.lifetime_calendar, lifetime_cycling)
+        else:
+            return self.lifetime_calendar
 
 
 # Non-dispatchable sources (e.g. renewables like wind and solar)
