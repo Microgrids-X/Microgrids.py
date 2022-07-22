@@ -1,8 +1,8 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-# Pierre Haessig, Evelise Antunes — 2022
 """Plotting functions for microgrid simulation data
 """
+# Copyright (c) 2022, Pierre Haessig
+# Distributed under the terms of the MIT License.
+# The full license is in the file LICENSE.txt, distributed with this software.
 
 import numpy as np
 import matplotlib.pyplot as plt

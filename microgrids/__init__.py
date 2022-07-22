@@ -1,8 +1,8 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-# Pierre Haessig, Evelise Antunes — 2022
 """Operational & economic simulation of Microgrid projects
 """
+# Copyright (c) 2022, Evelise de G. Antunes, Nabil Sadou and Pierre Haessig
+# Distributed under the terms of the MIT License.
+# The full license is in the file LICENSE.txt, distributed with this software.
 
 #__all__ = ['components', 'economics', 'operation', 'plotting']
 
