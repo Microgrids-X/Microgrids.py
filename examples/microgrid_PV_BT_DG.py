@@ -8,11 +8,12 @@ Uses real load data from Ouessant island and solar data from PVGIS.
 # (Copyright for Ouessant data is described in the file SOURCES.md.)
 
 from pathlib import Path
+
+import numpy as np
 from matplotlib import pyplot as plt
 
 import microgrids as mgs
 
-import numpy as np
 
 # Load time series data
 print(__file__)
