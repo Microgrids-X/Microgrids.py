@@ -85,6 +85,9 @@ microgrid = mgs.Microgrid(project, Pload,
     {'Solar PV': photovoltaic}
 )
 
+# Display the microgrid
+mgs.plotting.plot_ratings(microgrid, xlim=(-3.5,2.5), ylim=(-2.5,2.5))
+
 oper_traj = mgs.TrajRecorder()
 
 oper_stats = mgs.sim_operation(microgrid, oper_traj)
@@ -93,10 +96,8 @@ oper_stats = mgs.sim_operation(microgrid, oper_traj)
 # - 25.3 ms without trajectory recording.
 # - 43.2 ms with recording
 
-# plot_oper_traj(microgrid, oper_traj)
-# plot_energy_mix(microgrid, oper_stats, 'GWh')
-
-# plt.show()
+# mgs.plotting.plot_oper_traj(microgrid, oper_traj)
+mgs.plotting.plot_energy_mix(microgrid, oper_stats, 'GWh')
 
 mgc = mgs.sim_economics(microgrid, oper_stats)
 print(f'Microgrid NPC: {mgc.npc/1e6:.3f} M$')
@@ -110,3 +111,5 @@ def simulate(microgrid):
     oper_stats = mgs.sim_operation(microgrid)
     mgc = mgs.sim_economics(microgrid, oper_stats)
     return mgc, oper_stats
+
+plt.show()

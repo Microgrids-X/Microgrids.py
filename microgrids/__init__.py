@@ -6,6 +6,8 @@
 
 #__all__ = ['components', 'economics', 'operation', 'plotting']
 
+__version__ = '0.1.0'
+
 from . import components
 from . import operation
 from . import economics

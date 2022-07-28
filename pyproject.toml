@@ -1,6 +1,6 @@
 [project]
 name = "microgrids"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Pierre", email="pierre.haessig@centralesupelec.fr" },
 ]
@@ -19,6 +19,7 @@ classifiers = [
 
 dependencies = [
   "numpy",
+  "matplotlib",
 ]
 
 [project.urls]
@@ -26,6 +27,6 @@ dependencies = [
 "Bug Tracker" = "https://github.com/Microgrids-X/Microgrids.py/issues"
 
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 

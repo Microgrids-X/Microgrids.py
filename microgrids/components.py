@@ -130,7 +130,9 @@ class Battery:
     def lifetime(self, cycles : float) -> float:
         """effective lifetime (y), based on yearly operation `cycles`
         """
-        if cycles > 0.0:
+        if self.energy_rated == 0.0:
+            return self.lifetime_calendar
+        elif cycles > 0.0:
             lifetime_cycling = self.lifetime_cycles / cycles # cycles / (cycles/y) → y
             return min(self.lifetime_calendar, lifetime_cycling)
         else:

@@ -257,18 +257,18 @@ def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
     load_energy = np.sum(mg.load)*dt
     op_st.served_energy = load_energy - op_st.shed_energy
     op_st.shed_rate = op_st.shed_energy / load_energy \
-        if load_energy != 0.0 else np.inf
+        if load_energy != 0.0 else np.nan
 
     op_st.storage_loss_energy = op_st.storage_char_energy \
         - op_st.storage_dis_energy - (Esto - Esto_ini)
     storage_throughput = op_st.storage_char_energy + op_st.storage_dis_energy
     op_st.storage_cycles = storage_throughput / (2*mg.storage.energy_rated) \
-        if mg.storage.energy_rated != 0.0 else np.inf
+        if mg.storage.energy_rated != 0.0 else np.nan
 
     op_st.renew_potential_energy = np.sum(renew_potential)
     op_st.renew_energy = op_st.renew_potential_energy - op_st.spilled_energy
     op_st.renew_rate = 1 - op_st.gen_energy/op_st.served_energy \
-        if op_st.served_energy != 0.0 else np.inf
+        if op_st.served_energy != 0.0 else np.nan
     op_st.spilled_rate = op_st.spilled_energy / op_st.renew_potential_energy \
         if op_st.renew_potential_energy != 0.0 else np.inf
     return op_st
