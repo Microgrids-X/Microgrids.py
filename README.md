@@ -1,4 +1,4 @@
-# ![Microgrids.py](https://github.com/Microgrids-X/Microgrids-artwork/raw/main/png/Microgrids-py-256.png)
+# ![Microgrids.py](https://github.com/Microgrids-X/Microgrids-artwork/raw/main/svg/Microgrids-py.svg)
 
 The Microgrids.py package allows simulating the energetic operation of an isolated microgrid,
 returning economic and operation indicators.
