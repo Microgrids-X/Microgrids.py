@@ -33,9 +33,10 @@ la différentiation automatique” from [GdR SEEDS (CNRS, France)](https://seeds
 
 ## Other microgrids-related packages in Python
 
-Found by searching for ["microgrid"](https://pypi.org/search/?q=microgrid) on PyPI:
+Found by searching for ["microgrid"](https://pypi.org/search/?q=microgrid) on PyPI or from personal knowledge:
 
-- [PyEPLAN](https://pypi.org/project/pyeplan/):  a free software toolbox for designing resilient mini-grids in developing countries. From Leeds, CUT, ICL.
+- [PyEPLAN](https://pypi.org/project/pyeplan/): a free software toolbox for designing resilient mini-grids in developing countries. From Leeds, CUT, ICL.
+- [pymgrid](https://github.com/Total-RD/pymgrid) (PYthon MicroGRID): a python library to generate and simulate a large number of microgrids.
 - [OpenModelica Microgrid Gym](https://pypi.org/project/openmodelica-microgrid-gym/) (OMG):
   a software toolbox for the simulation and control optimization of microgrids
   based on energy conversion by power electronic converters.
