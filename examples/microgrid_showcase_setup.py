@@ -9,19 +9,6 @@ from functools import lru_cache
 import numpy as np
 from matplotlib import pyplot as plt
 
-try: # Install microgrids & ipywidgets packages in JupyterLite (if run in JupyterLite)
-    import piplite
-    async def install_packages():
-        await piplite.install(['microgrids', 'ipywidgets'])
-        print('Microgrids & ipywidgets packages installed with piplite.')
-
-    # Get away with the fact that `await` is not allowed in a script:
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(install_packages())
-except ImportError:
-    pass
-
 from ipywidgets import interactive, fixed
 
 import microgrids as mgs
