@@ -57,19 +57,19 @@ class DispatchableGenerator:
     power_rated: float
     "rated power (kW)"
     fuel_intercept: float
-    "fuel curve intercept (fu/h/kW_max)"
+    "fuel consumption curve intercept (L/h/kW_max)"
     fuel_slope: float
-    "fuel curve slope (fu/h/kW)"
+    "fuel consumption curve slope (L/h/kW)"
 
     # Economics parameters
     fuel_price: float
-    "fuel price ($/fu)"
+    "fuel price ($/L)"
     investment_price: float
     "initial investiment price ($/kW)"
     om_price_hours: float
     "operation & maintenance price ($/kW/h of operation)"
     lifetime_hours: float
-    "generator operation lifetime (h of operation)"
+    "generator lifetime (h of operation)"
 
     # Technical parameters with default values
     load_ratio_min: float = 0.0
@@ -77,11 +77,11 @@ class DispatchableGenerator:
 
     # Economics with default values
     replacement_price_ratio: float = 1.0
-    "replacement price, as a fraction of initial investment price"
+    "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
-    "salvage price, as a fraction of initial investment price"
-    fuel_unit: str = "l"
-    "fuel counting unit (i.e. 'fu' used in price and fuel curve parameters)"
+    "salvage price, relative to initial investment"
+    fuel_unit: str = "L"
+    "fuel quantity unit (used in fuel price and consumption curve parameters)"
 
     def lifetime(self, oper_hours : float) -> float:
         """effective lifetime (y), based on yearly operation hours `oper_hours` (h/y)
@@ -107,7 +107,7 @@ class Battery:
     lifetime_calendar: float
     "calendar lifetime (y)"
     lifetime_cycles: float
-    "maximum number of cycles over life (1)"
+    "maximum number of cycles over life"
 
     # Technical parameters with default values
     charge_rate_max: float = 1.0
@@ -123,9 +123,9 @@ class Battery:
 
     # Economics with default values
     replacement_price_ratio: float = 1.0
-    "replacement price, as a fraction of initial investment price"
+    "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
-    "salvage price, as a fraction of initial investment price"
+    "salvage price, relative to initial investment"
 
     def lifetime(self, cycles : float) -> float:
         """effective lifetime (y), based on yearly operation `cycles`
@@ -171,9 +171,9 @@ class Photovoltaic(NonDispatchableSource):
 
     # Economics with default values
     replacement_price_ratio: float = 1.0
-    "replacement price, as a fraction of initial investment price"
+    "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
-    "salvage price, as a fraction of initial investment price"
+    "salvage price, relative to initial investment"
 
     def production(self):
         "PV production time series"

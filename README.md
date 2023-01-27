@@ -21,9 +21,9 @@ You can have a live demo of this notebook right in your browser:
 (from [Microgrids.web](https://github.com/Microgrids-X/Microgrids.web/) repository).
 
 
-## Ackowledgements
+## Acknowledgements
 
-The development of Microgrids.jl (sibling package in Julia) was lead by
+The development of Microgrids.jl (sibling package in Julia) was first led by
 Evelise de Godoy Antunes. She was financed in part by
 the Coordenação de Aperfeiçoamento de Pessoal de Nı́vel Superior - Brasil (CAPES) – Finance Code 001,
 by Conselho Nacional de Desenvolvimento Cientı́fico e Tecnológico - Brasil (CNPq)
