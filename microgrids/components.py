@@ -110,9 +110,9 @@ class Battery:
     "maximum number of cycles over life"
 
     # Technical parameters with default values
-    charge_rate_max: float = 1.0
+    charge_rate: float = 1.0
     "max charge power for 1 kWh (kW/kWh = h^-1)"
-    discharge_rate_max: float = 1.0
+    discharge_rate: float = 1.0
     "max discharge power for 1 kWh (kW/kWh = h^-1)"
     loss_factor: float = 0.05
     "linear loss factor α (round-trip efficiency is about 1 − 2α) ∈ [0,1]"

@@ -59,7 +59,7 @@ class CostFactors:
         replacements_number = int(np.ceil(mg_project.lifetime/lifetime)) - 1
         # years that the replacements happen
         replacement_years = [i*lifetime for i in range(1, replacements_number+1)]
-        # discount factors for the replacements years
+        # discount factors for the replacement years
         replacement_factors = [1/(1 + mg_project.discount_rate)**i for i in replacement_years]
 
         # component remaining life at the project end

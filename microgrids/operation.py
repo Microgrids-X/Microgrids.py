@@ -174,8 +174,8 @@ def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
     # Fixed parameters and short aliases
     K = len(mg.load)
     dt = mg.project.timestep
-    Psto_pmax =  mg.storage.discharge_rate_max * mg.storage.energy_rated
-    Psto_pmin = -mg.storage.charge_rate_max * mg.storage.energy_rated
+    Psto_pmax =  mg.storage.discharge_rate * mg.storage.energy_rated
+    Psto_pmin = -mg.storage.charge_rate * mg.storage.energy_rated
     Esto_max = mg.storage.energy_rated
     Esto_min = mg.storage.SoC_min * mg.storage.energy_rated
     sto_loss = mg.storage.loss_factor
