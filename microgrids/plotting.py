@@ -128,14 +128,14 @@ def plot_ratings(microgrid:Microgrid, unit='MW',
     _add_component(ax, (-1,-0.5), 'NE', width, height,
                    label, color='#acffc9')
 
-    # Non dispatchables: just the first one as of now
+    # Non dispatchables: sum of all rated powers
     if microgrid.nondispatchables:
-        name0 = list(microgrid.nondispatchables.keys())[0]
-        nd0 = microgrid.nondispatchables[name0]
-        Pnd = nd0.power_rated
-        width = np.sqrt(Pnd/P0)
+        names = microgrid.nondispatchables.keys()
+        name_joined = '\n+ '.join(names)
+        Pnd_tot = sum(nd.power_rated for nd in microgrid.nondispatchables.values())
+        width = np.sqrt(Pnd_tot/P0)
         height = width*2/3
-        label=f'{name0}\n{Pnd*scaling:.3g} {unit}'
+        label=f'{name_joined}\n{Pnd_tot*scaling:.3g} {unit}'
         _add_component(ax, (-1,0.5), 'SE', width, height,
                     label, color='#ffe3a0')
 

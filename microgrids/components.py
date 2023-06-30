@@ -13,7 +13,8 @@ import numpy as np
 import numpy.typing as npt
 
 __all__ = ['Microgrid', 'Project',
-    'DispatchableGenerator', 'Battery', 'Photovoltaic']
+    'DispatchableGenerator', 'Battery',
+    'Photovoltaic', 'WindPower']
 
 
 @dataclass
@@ -22,7 +23,7 @@ class Microgrid:
     project: 'Project'
     "microgrid project information"
     load: npt.ArrayLike
-    "desired load (kW)"
+    "desired load time series (kW)"
     generator: 'DispatchableGenerator'
     "dispatchable generator"
     storage: 'Battery'
@@ -155,7 +156,7 @@ class Photovoltaic(NonDispatchableSource):
     power_rated: float
     "rated power (kW)"
     irradiance: npt.ArrayLike
-    "global solar irradiance incident on the PV array (kW/m²)"
+    "global solar irradiance incident on the PV array time series (kW/m²)"
 
     # Economics
     investment_price: float
@@ -178,4 +179,31 @@ class Photovoltaic(NonDispatchableSource):
     def production(self):
         "PV production time series"
         power_output = self.derating_factor * self.power_rated * self.irradiance
+        return power_output
+
+@dataclass
+class WindPower(NonDispatchableSource):
+    """Wind power generator (simple model using a given capacity factor time series)"""
+    power_rated: float
+    "rated power (kW)"
+    capa_factor: npt.ArrayLike
+    "capacity factor (normalized power) time series ∈ [0,1]"
+
+    # Economics
+    investment_price: float
+    "initial investiment price ($/kW)"
+    om_price: float
+    "operation and maintenance price ($/kW)"
+    lifetime: float
+    "lifetime (y)"
+
+    # Economics with default values
+    replacement_price_ratio: float = 1.0
+    "replacement price, relative to initial investment"
+    salvage_price_ratio: float = 1.0
+    "salvage price, relative to initial investment"
+
+    def production(self):
+        "Wind power production time series"
+        power_output = self.power_rated * self.capa_factor
         return power_output
