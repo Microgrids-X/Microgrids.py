@@ -186,7 +186,7 @@ class WindPower(NonDispatchableSource):
     """Wind power generator (simple model using a given capacity factor time series)"""
     power_rated: float
     "rated power (kW)"
-    capa_factor: npt.ArrayLike
+    capacity_factor: npt.ArrayLike
     "capacity factor (normalized power) time series ∈ [0,1]"
 
     # Economics
@@ -205,5 +205,36 @@ class WindPower(NonDispatchableSource):
 
     def production(self):
         "Wind power production time series"
-        power_output = self.power_rated * self.capa_factor
+        power_output = self.power_rated * self.capacity_factor
         return power_output
+
+    @staticmethod
+    def capacity_from_wind(v: npt.ArrayLike,
+                           TSP: float, Cp=0.50, v_out=25.0,
+                           α=3.0) -> npt.ArrayLike:
+        """Compute capacity factor (normalized power) of a wind turbine,
+        using a generic parametrized power curve P(v),
+        for a given a wind speed time series `v` (m/s).
+
+        Model parameters are:
+        Turbine Specific Power `TSP`, in W/m², typically 200 – 400.
+        Maximum power coefficient `Cp` (used before saturation)
+        should be smaller than Betz' limit of 16/27.
+        Cut-out wind speed is `v_out` (m/s).
+
+        A fixed Cp model is used, with a soft saturation when reaching maximum power.
+        This soft saturation, based on LogSumExp, is tuned with `α`
+        (default: 3.0, higher yields sharper transition).
+
+        Air is assumed to have fixed density ρ=1.225 kg/m³.
+        """
+        ρ = 1.225 # kg/m³ at 15°C
+        # Normalized power from the wind, without saturation:
+        cf = 0.5*Cp*ρ/TSP * v**3
+        # saturation using a smooth min based on LogSumExp
+        cf = -np.log(np.exp(-α) + np.exp(-α*cf)) / α
+        # saturate negative values (due to the smooth min)
+        cf = np.where(cf>=0,    cf, 0)
+        # Cut-out wind speed:
+        cf = np.where(v<=v_out, cf, 0)
+        return cf
