@@ -54,7 +54,7 @@ class Project:
 @dataclass
 class DispatchableGenerator:
     """Dispatchable power source (e.g. Diesel generator, Gas turbine, Fuel cell)"""
-    # Technical parameters
+    # Main technical parameters
     power_rated: float
     "rated power (kW)"
     fuel_intercept: float
@@ -62,21 +62,21 @@ class DispatchableGenerator:
     fuel_slope: float
     "fuel consumption curve slope (L/h/kW)"
 
-    # Economics parameters
+    # Main economics parameters
     fuel_price: float
     "fuel price ($/L)"
     investment_price: float
-    "initial investiment price ($/kW)"
+    "initial investment price ($/kW)"
     om_price_hours: float
     "operation & maintenance price ($/kW/h of operation)"
     lifetime_hours: float
     "generator lifetime (h of operation)"
 
-    # Technical parameters with default values
+    # Secondary technical parameters, with default values
     load_ratio_min: float = 0.0
     "minimum load ratio ∈ [0,1]"
 
-    # Economics with default values
+    # Secondary economics parameters, with default values
     replacement_price_ratio: float = 1.0
     "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
@@ -95,14 +95,16 @@ class Battery:
     """Battery energy storage (including AC/DC converter)
 
     Battery dynamics is E(k+1) = E(k) − (P(k) + α|P(k)|).Δt
+    where α is a linear loss factor (`loss_factor` parameter).
+    It relates approximately to the roundtrip efficiency η as η = 1−2α.
     """
-    # Technical parameters
+    # Main technical parameters
     energy_rated: float
     "rated energy capacity (kWh)"
 
-    # economics
+    # Main economics parameters
     investment_price: float
-    "initial investiment price ($/kWh)"
+    "initial investment price ($/kWh)"
     om_price: float
     "operation and maintenance price ($/kWh/y)"
     lifetime_calendar: float
@@ -110,7 +112,7 @@ class Battery:
     lifetime_cycles: float
     "maximum number of cycles over life"
 
-    # Technical parameters with default values
+    # Secondary technical parameters, with default values
     charge_rate: float = 1.0
     "max charge power for 1 kWh (kW/kWh = h^-1)"
     discharge_rate: float = 1.0
@@ -122,7 +124,7 @@ class Battery:
     SoC_ini: float = 0.0
     "initial State of Charge ∈ [0,1]"
 
-    # Economics with default values
+    # Secondary economics parameters, with default values
     replacement_price_ratio: float = 1.0
     "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
@@ -153,24 +155,25 @@ class NonDispatchableSource(ABC):
 @dataclass
 class Photovoltaic(NonDispatchableSource):
     """Solar photovoltaic generator (including AC/DC converter)"""
+    # Main technical parameters
     power_rated: float
     "rated power (kW)"
     irradiance: npt.ArrayLike
     "global solar irradiance incident on the PV array time series (kW/m²)"
 
-    # Economics
+    # Main economics parameters
     investment_price: float
-    "initial investiment price ($/kW)"
+    "initial investment price ($/kW)"
     om_price: float
     "operation and maintenance price ($/kW)"
     lifetime: float
     "lifetime (y)"
 
-    # Technical parameters with default values
+    # Secondary technical parameters, with default values
     derating_factor: float = 0.9
     "derating factor (or performance ratio) ∈ [0,1]"
 
-    # Economics with default values
+    # Secondary economics parameters, with default values
     replacement_price_ratio: float = 1.0
     "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
@@ -184,20 +187,21 @@ class Photovoltaic(NonDispatchableSource):
 @dataclass
 class WindPower(NonDispatchableSource):
     """Wind power generator (simple model using a given capacity factor time series)"""
+    # Main technical parameters
     power_rated: float
     "rated power (kW)"
     capacity_factor: npt.ArrayLike
     "capacity factor (normalized power) time series ∈ [0,1]"
 
-    # Economics
+    # Main economics parameters
     investment_price: float
-    "initial investiment price ($/kW)"
+    "initial investment price ($/kW)"
     om_price: float
     "operation and maintenance price ($/kW)"
     lifetime: float
     "lifetime (y)"
 
-    # Economics with default values
+    # Secondary economics parameters, with default values
     replacement_price_ratio: float = 1.0
     "replacement price, relative to initial investment"
     salvage_price_ratio: float = 1.0
