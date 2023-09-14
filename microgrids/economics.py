@@ -119,7 +119,7 @@ class MicrogridCosts:
     storage: CostFactors
     'costs of energy storage'
     nondispatchables: dict[str, CostFactors]
-    'list costs of each non-dispatchable source'
+    'costs of each non-dispatchable source'
 
     def costs_table(self):
         """Microgrid costs as a numpy 2D array"""

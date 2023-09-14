@@ -1,6 +1,6 @@
 [project]
 name = "microgrids"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
   { name="Pierre", email="pierre.haessig@centralesupelec.fr" },
 ]

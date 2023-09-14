@@ -39,7 +39,7 @@ class OperationStats:
     gen_hours: float = 0.0
     "cumulated operating hours of the dispatchable generator (h/y)"
     gen_fuel: float = 0.0
-    "Diesel consumption in one year (L)"
+    "fuel consumption (L/y)"
 
     # Energy storage (e.g. battery) statistics
     storage_cycles: float = 0.0
@@ -164,7 +164,8 @@ def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
 
     Returns operational statistics.
     """
-    # Remark: assuming all non-dispatchable sources are renewable!
+    # Renewable power generation
+    # (remark on naming convention: all non-dispatchable sources are assumed renewable!)
     renew_productions = [nd.production() for nd in mg.nondispatchables.values()]
     renew_potential = sum(renew_productions)
 
@@ -175,7 +176,7 @@ def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
     K = len(mg.load)
     dt = mg.project.timestep
     Psto_pmax =  mg.storage.discharge_rate * mg.storage.energy_rated
-    Psto_pmin = -mg.storage.charge_rate * mg.storage.energy_rated
+    Psto_pmin = -mg.storage.charge_rate * mg.storage.energy_rated # <0 in line with the generator convention for Psto
     Esto_max = mg.storage.energy_rated
     Esto_min = mg.storage.SoC_min * mg.storage.energy_rated
     sto_loss = mg.storage.loss_factor
@@ -236,7 +237,7 @@ def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
             op_st.gen_energy += Pgen*dt
             op_st.gen_hours += dt
             fuel_rate = mg.generator.fuel_intercept * mg.generator.power_rated +\
-                          mg.generator.fuel_slope * Pgen # (l/h)
+                          mg.generator.fuel_slope * Pgen # (L/h)
             op_st.gen_fuel += fuel_rate*dt
 
         # Energy storage (e.g. battery) statistics
@@ -251,7 +252,7 @@ def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
     # end for each instant k
 
     if recorder:
-        recorder.rec(K-1, Esto=Esto)# Esto at last instant
+        recorder.rec(K, Esto=Esto)# Esto at last instant
 
     # Some more aggregated operation statistics
     load_energy = np.sum(mg.load)*dt
