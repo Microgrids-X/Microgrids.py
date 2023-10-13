@@ -1,6 +1,6 @@
 [project]
 name = "microgrids"
-version = "0.2.1"
+version = "0.3.0"
 authors = [
   { name="Pierre", email="pierre.haessig@centralesupelec.fr" },
 ]
@@ -10,7 +10,7 @@ maintainers = [
 description = "Operational & economic simulation of Microgrid projects"
 readme = "README.md"
 license = { file="LICENSE.md" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

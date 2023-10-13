@@ -157,10 +157,10 @@ def dispatch(Pnl_req, Psto_cmax, Psto_dmax, Pgen_max) -> tuple[float, float, flo
     return Pgen, Psto, Pspill, Pshed
 
 
-def sim_operation(mg:Microgrid, recorder=None) -> OperationStats:
+def sim_operation(mg: Microgrid, recorder: TrajRecorder | None = None) -> OperationStats:
     """Simulate the operation of Microgrid project `mg`.
 
-    Time series are recorded if `recorder` is a `Recorder`.
+    Operation time series are optionnaly recorded if `recorder` is a `TrajRecorder` instance.
 
     Returns operational statistics.
     """

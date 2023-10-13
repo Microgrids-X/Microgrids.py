@@ -157,7 +157,7 @@ class MicrogridCosts:
 
 def sim_economics(mg: Microgrid, oper_stats: OperationStats) -> MicrogridCosts:
     """evaluate economic performance of Microgrid `mg`,
-    based on its operation statistics `oper_stats`.
+    based on its operation statistics `oper_stats` (from `sim_operation`).
     """
     # Dispatchable generator
     gen = mg.generator
