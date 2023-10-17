@@ -6,6 +6,7 @@
 
 from dataclasses import dataclass
 
+from math import inf
 import numpy as np
 
 from .components import Microgrid, Project
@@ -50,37 +51,48 @@ class CostFactors:
 
         Returns the cost factors of the component.
         """
+        # Microgrid project parameters:
+        mg_lifetime = mg_project.lifetime
         # discount factor for each year of the project
         discount_factors = [1/((1 + mg_project.discount_rate)**i)
-                            for i in range(1, mg_project.lifetime+1)]
+                            for i in range(1, mg_lifetime+1)]
         sum_discounts = sum(discount_factors)
 
-        # number of replacements
-        replacements_number = int(np.ceil(mg_project.lifetime/lifetime)) - 1
-        # years that the replacements happen
-        replacement_years = [i*lifetime for i in range(1, replacements_number+1)]
-        # discount factors for the replacement years
-        replacement_factors = [1/(1 + mg_project.discount_rate)**i for i in replacement_years]
-
-        # component remaining life at the project end
-        remaining_life = lifetime*(1+replacements_number) - mg_project.lifetime
-        # proportional unitary salvage cost given remaining life
-        salvage_price_effective = salvage_price * remaining_life / lifetime
-
-        # investment cost
+        ### Investment cost
         investment_cost = investment_price * quantity
-        # operation and maintenance cost
+
+        ### Operation & maintenance and fuel costs
         om_cost = om_price * quantity * sum_discounts
-        # replacement cost
-        if replacements_number == 0:
-            replacement_cost = 0.0
-        else:
-            replacement_cost = replacement_price * quantity * sum(replacement_factors)
-        # salvage cost (<0)
-        salvage_cost = -salvage_price_effective * quantity * discount_factors[mg_project.lifetime-1]
-        # fuel cost
         fuel_cost = fuel_price * fuel_consumption * sum_discounts
 
+        ### Replacement and salvage:
+        if lifetime < inf:
+            # number of replacements
+            replacements_number = int(np.ceil(mg_lifetime/lifetime)) - 1
+
+            # net present replacement cost
+            if replacements_number == 0:
+                replacement_cost = 0.0
+            else:
+                # years that the replacements happen
+                replacement_years = [i*lifetime for i in range(1, replacements_number+1)]
+                # discount factors for the replacement years
+                replacement_factors = [1/(1 + mg_project.discount_rate)**i for i in replacement_years]
+                replacement_cost = replacement_price * quantity * sum(replacement_factors)
+
+            # component remaining life at the project end
+            remaining_life = lifetime*(1+replacements_number) - mg_lifetime
+            # proportional unitary salvage cost given remaining life
+            salvage_price_effective = salvage_price * remaining_life / lifetime
+
+        else: # Infinite lifetime (happens for components with zero usage)
+            replacement_cost = 0.0
+            salvage_price_effective = salvage_price # component sold "as new"
+
+        # net present salvage cost (<0)
+        salvage_cost = -salvage_price_effective * quantity * discount_factors[mg_lifetime-1]
+
+        ### Total
         total_cost = investment_cost + replacement_cost + om_cost + fuel_cost + salvage_cost
 
         return cls(total_cost, investment_cost, replacement_cost, om_cost, fuel_cost, salvage_cost)

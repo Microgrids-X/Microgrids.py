@@ -9,6 +9,7 @@ also include `production` methods for non-dispatchable sources
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from math import inf
 import numpy as np
 import numpy.typing as npt
 
@@ -31,6 +32,7 @@ class Microgrid:
     nondispatchables: dict[str, 'NonDispatchableSource']
     "non-dispatchable sources (e.g. renewables like wind and solar)"
 
+    # `simulate`` method is defined in top-level __init__.py
 
 @dataclass
 class Project:
@@ -87,6 +89,8 @@ class DispatchableGenerator:
     def lifetime(self, oper_hours : float) -> float:
         """effective lifetime (y), based on yearly operation hours `oper_hours` (h/y)
         """
+        if oper_hours == 0.0:
+            return inf
         return self.lifetime_hours / oper_hours # h / (h/y) → y
 
 
@@ -133,9 +137,7 @@ class Battery:
     def lifetime(self, cycles : float) -> float:
         """effective lifetime (y), based on yearly operation `cycles`
         """
-        if self.energy_rated == 0.0:
-            return self.lifetime_calendar
-        elif cycles > 0.0:
+        if cycles > 0.0:
             lifetime_cycling = self.lifetime_cycles / cycles # cycles / (cycles/y) → y
             return min(self.lifetime_calendar, lifetime_cycling)
         else:

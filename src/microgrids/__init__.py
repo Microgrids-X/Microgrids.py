@@ -4,9 +4,7 @@
 # Distributed under the terms of the MIT License.
 # The full license is in the file LICENSE.txt, distributed with this software.
 
-#__all__ = ['components', 'economics', 'operation', 'plotting']
-
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 
 from . import components
 from . import operation
