@@ -1,6 +1,6 @@
 MIT License
 
-Copyright © 2022 by Evelise de G. Antunes, Nabil Sadou and Pierre Haessig
+Copyright © 2022, 2023  Evelise de G. Antunes, Nabil Sadou and Pierre Haessig
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
