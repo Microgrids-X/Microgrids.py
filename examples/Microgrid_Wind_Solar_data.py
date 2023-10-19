@@ -12,7 +12,7 @@ import microgrids as mgs
 print("Data definition for Microgrid with wind, solar, storage and generator...")
 
 ### Input time series
-folder = Path('.')
+folder = Path(__file__).parent
 datapath = folder / 'data' / 'Ouessant_data_2016.csv'
 data = np.loadtxt(datapath,
                   delimiter=',', skiprows=2, usecols=(1,2,4))

@@ -3,71 +3,23 @@
 """
 # Pierre Haessig — July 2022
 
-from pathlib import Path
 from functools import lru_cache
 
 import numpy as np
+import scipy.optimize as opt
 from matplotlib import pyplot as plt
 
 from ipywidgets import interactive, fixed
 
 import microgrids as mgs
 
-
-# Load time series data
-print(__file__)
-folder = Path(__file__).parent
-datapath = folder / 'data' / 'Ouessant_data_2016.csv'
-data = np.loadtxt(datapath,
-                  delimiter=',', skiprows=2, usecols=(1,2))
-
-# Split load and solar data:
-Pload = data[:,0] # kW
-Ppv1k =  data[:,1] / 1000; # convert to kW/kWp
-
-
-## Create Microgrid project and its components
-
-# Project
-lifetime = 25 # yr
-discount_rate = 0.05
-timestep = 1 # h
+from Microgrid_Wind_Solar_data import *
 
 project = mgs.Project(lifetime, discount_rate, timestep)
 
-# Diesel generator
-power_rated_gen = 1800.  # /2 to see some load shedding (kW)
-fuel_intercept = 0.0 # fuel curve intercept (l/h/kW_max)
-fuel_slope = 0.240 # fuel curve slope (l/h/kW)
-fuel_price = 1. # fuel price ($/l)
-investment_price_gen = 400. # initial investiment price ($/kW)
-om_price_gen = 0.02 # operation & maintenance price ($/kW/h of operation)
-lifetime_gen = 15000. # generator lifetime (h)
-
-# Battery energy storage
-energy_rated_sto = 9000. # rated energy capacity (kWh)
-investment_price_sto = 350. # initial investiment price ($/kWh)
-om_price_sto = 10. # operation and maintenance price ($/kWh/y)
-lifetime_sto = 15. # calendar lifetime (y)
-lifetime_cycles = 3000 # maximum number of cycles over life (1)
-# Parameters with default values
-charge_rate_max = 1.0 # max charge power for 1 kWh (kW/kWh = h^-1)
-discharge_rate_max = 1.0 # max discharge power for 1 kWh (kW/kWh = h^-1)
-loss_factor_sto = 0.05 # linear loss factor α (round-trip efficiency is about 1 − 2α) ∈ [0,1]
-
-# Photovoltaic generation
-power_rated_pv = 6000. # rated power (kW)
-irradiance = Ppv1k # global solar irradiance incident on the PV array (kW/m²)
-investment_price_pv = 1200. # initial investiment price ($/kW)
-om_price_pv = 20.# operation and maintenance price ($/kW)
-lifetime_pv = 25. # lifetime (y)
-# Parameters with default values
-derating_factor_pv = 1.0 # derating factor (or performance ratio) ∈ [0,1]"
-
-
-def interactive_mg(power_rated_gen, power_rated_pv, energy_rated_sto):
-    """Create Microgrid which includes Generator,
-    PV plant and Battery with given ratings"""
+def interactive_mg(power_rated_gen, energy_rated_sto, power_rated_pv, power_rated_wind):
+    """Create `Microgrid` project description with generator, battery,
+    and renewables (solar and wind) with given ratings"""
     generator = mgs.DispatchableGenerator(power_rated_gen,
         fuel_intercept, fuel_slope, fuel_price,
         investment_price_gen, om_price_gen,
@@ -77,36 +29,51 @@ def interactive_mg(power_rated_gen, power_rated_pv, energy_rated_sto):
     battery = mgs.Battery(energy_rated_sto,
         investment_price_sto, om_price_sto,
         lifetime_sto, lifetime_cycles,
-        charge_rate_max, discharge_rate_max,
+        charge_rate, discharge_rate,
         loss_factor_sto)
 
     photovoltaic = mgs.Photovoltaic(power_rated_pv, irradiance,
         investment_price_pv, om_price_pv,
         lifetime_pv, derating_factor_pv)
 
+    windgen = mgs.WindPower(power_rated_wind, cf_wind,
+        investment_price_wind, om_price_wind,
+        lifetime_wind)
+
     microgrid = mgs.Microgrid(project, Pload,
-        generator, battery,
-        {'Solar PV': photovoltaic}
+        generator, battery, {
+        'Solar PV': photovoltaic,
+        'Wind': windgen
+        }
     )
     return microgrid
 
 
 @lru_cache(maxsize=1000)
-def cached_oper_costs(power_rated_gen, power_rated_pv, energy_rated_sto):
-    microgrid = interactive_mg(power_rated_gen, power_rated_pv, energy_rated_sto)
-    oper_stats = mgs.sim_operation(microgrid)
-    mg_costs = mgs.sim_economics(microgrid, oper_stats)
+def simulate_microgrid(power_rated_gen, energy_rated_sto, power_rated_pv, power_rated_wind):
+    """Microgrid performance simulator, with calculation caching"""
+    microgrid = interactive_mg(power_rated_gen, energy_rated_sto, power_rated_pv, power_rated_wind)
+    # Launch simulation:
+    oper_stats, mg_costs = microgrid.simulate()
     return oper_stats, mg_costs
 
 
-def interactive_energy_mix(PV_power=0., Batt_energy=0.):
+def interactive_energy_mix(Solar=0., Wind=0., Battery=0.):
     """display energy mix with given ratings"""
-    microgrid = interactive_mg(power_rated_gen, PV_power, Batt_energy)
-    # Simulate
-    oper_stats, mg_costs = cached_oper_costs(power_rated_gen, PV_power, Batt_energy)
+    # Translate variable names:
+    # power_rated_gen # taken as global variable
+    energy_rated_sto = Battery # kWh
+    power_rated_pv = Solar # kW
+    power_rated_wind = Wind # kW
+
+    # Create Microgrid project description
+    microgrid = interactive_mg(power_rated_gen, energy_rated_sto, power_rated_pv, power_rated_wind)
+    # Simulate (with cache)
+    oper_stats, mg_costs = simulate_microgrid(power_rated_gen, energy_rated_sto, power_rated_pv, power_rated_wind)
     # Show some performance stats:
-    print(f'Load shedding rate: {oper_stats.shed_rate:.1%}')
-    print(f'Renewable rate: {oper_stats.renew_rate:.1%}')
+    print(f'Load shedding: {oper_stats.shed_rate:.1%}')
+    print(f'Renewable: {oper_stats.renew_rate:.1%}')
+    print(f'(Spilled renewable: {oper_stats.spilled_rate:.1%})')
     print(f'Levelized Cost of Electricity: {mg_costs.lcoe:.3f} $/kWh')
 
     # Display energy mix
@@ -116,5 +83,74 @@ def interactive_energy_mix(PV_power=0., Batt_energy=0.):
     mgs.plotting.plot_energy_mix(microgrid, oper_stats, ax=ax2)
     fig.tight_layout()
     plt.show()
+
+### For sizing optimization
+
+def obj_multi(x):
+    "Multi-objective criterion for microgrid performance: lcoe, shedding rate"
+    # Split decision variables (converted MW → kW):
+    power_rated_gen = x[0]*1000
+    energy_rated_sto = x[1]*1000
+    power_rated_pv = x[2]*1000
+    power_rated_wind = x[3]*1000
+    stats, costs = simulate_microgrid(power_rated_gen, energy_rated_sto, power_rated_pv, power_rated_wind)
+    # Extract KPIs of interest
+    lcoe = costs.lcoe # $/kWh
+    shed_rate = stats.shed_rate # in [0,1]
+    return lcoe, shed_rate
+
+
+def obj(x, shed_max, w_shed_max=1e5):
+    """Mono-objective criterion: LCOE + penalty if shedding rate > `shed_max`
+
+    load shedding penalty threshold `shed_max` should be in [0,1[
+    """
+    lcoe, shed_rate = obj_multi(x)
+    over_shed = shed_rate - shed_max
+    if over_shed > 0.0:
+        penalty = w_shed_max*over_shed
+    else:
+        penalty = 0.0
+    return lcoe + penalty
+
+Pload_max = np.max(Pload)
+xmin = np.array([0., 0., 1e-3, 0.]) # 1e-3 instead of 0.0, because LCOE is NaN if ther is exactly zero generation
+xmax = np.array([1.2, 10.0, 10.0, 5.0]) * (Pload_max/1000)
+
+def optim_mg(shed_max, algo='DIRECT', maxeval=300, xtol_rel=1e-4, srand=1):
+    """Optimize sizing of microgrid based on the `obj` function
+
+    Parameters:
+    - `x0`: initial sizing (for the algorithms which need them)
+    - `shed_max`: load shedding penalty threshold (same as in `obj`)
+    - `algo` could be one of 'DIRECT'...
+    - `maxeval`: maximum allowed number of calls to the objective function,
+      that is to the microgrid simulation
+    - `xtol_rel`: termination condition based on relative change of sizing, see NLopt doc.
+    - `srand`: random number generation seed (for algorithms which use some stochastic search)
+
+    Problem bounds are taken as the global variables `xmin`, `xmax`,
+    but could be added to the parameters as well.
+    """
+    x0 = np.array([1.0, 3.0, 3.0, 2.0]) * (Pload_max/1000)
+    bounds = opt.Bounds(xmin, xmax)
+    if algo=='DIRECT':
+        res = opt.direct(obj, bounds, args=(shed_max,), maxfun=maxeval)
+    else:
+        raise ValueError(f'Unsupported optimization algorithm {algo}')
+
+    xopt = res.x
+    return xopt, res, res.nfev
+
+def print_xopt(x):
+    # Split decision variables (converted MW → kW):
+    power_rated_gen = x[0]*1000
+    energy_rated_sto = x[1]*1000
+    power_rated_pv = x[2]*1000
+    power_rated_wind = x[3]*1000
+    print(f'- Generator power:  {power_rated_gen:.0f} kW')
+    print(f'- Storage capacity: {energy_rated_sto:.0f} kWh')
+    print(f'- Solar power:      {power_rated_pv:.0f} kW')
+    print(f'- Wind power:       {power_rated_wind:.0f} kW')
 
 print('Showcase setup complete.')
